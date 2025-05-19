@@ -1,83 +1,85 @@
 def exp1():
     print("""
-         Experiment 1
+Experiment 1
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow import keras
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import seaborn as sns
+import os
+import pandas as pd
+from keras.utils import image_dataset_from_directory
 
-        import numpy as np
-        import matplotlib.pyplot as plt
-        import tensorflow as tf
-        from tensorflow import keras
-        from keras.models import Sequential
-        from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
-        from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-        import seaborn as sns
-        import os
-        import pandas as pd
-        from keras.utils import image_dataset_from_directory
-        os.chdir('/content/drive/MyDrive/Transfer Learning/flower')
-        print("Files:", os.listdir())
-        train_dir = '/content/drive/MyDrive/Transfer Learning/flower/train'
-        test_dir = '/content/drive/MyDrive/Transfer Learning/flower/test'
-        train_dataset = image_dataset_from_directory(
-            train_dir,
-            image_size=(128, 128),
-            batch_size=32)
-        test_dataset = image_dataset_from_directory(
-            test_dir,
-            image_size=(128, 128),
-            batch_size=32,
-            labels=None,        
-            label_mode=None,   
-            shuffle=False)
-        class_names = train_dataset.class_names
-        print("\nClass names:", class_names)
-        train_count = sum([len(batch[0]) for batch in train_dataset])
-        test_count = sum([len(batch[0]) for batch in test_dataset])
-        print(f"\nTotal training images: {train_count}")
-        print(f"Total testing images: {test_count}")
+os.chdir('/content/drive/MyDrive/Transfer Learning/flower')
+print("Files:", os.listdir())
 
+train_dir = '/content/drive/MyDrive/Transfer Learning/flower/train'
+test_dir = '/content/drive/MyDrive/Transfer Learning/flower/test'
 
-        model = Sequential([
-            Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 3)),
-            MaxPooling2D(2, 2),
-            Conv2D(64, (3, 3), activation='relu'),
-            MaxPooling2D(2, 2),
-            Conv2D(128, (3, 3), activation='relu'),
-            MaxPooling2D(2, 2),
-            Flatten(),
-            Dense(128, activation='relu'),
-            Dropout(0.5),
-            Dense(7, activation='softmax')  
-        ])
-        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        model.summary()
+train_dataset = image_dataset_from_directory(
+    train_dir,
+    image_size=(128, 128),
+    batch_size=32
+)
+test_dataset = image_dataset_from_directory(
+    test_dir,
+    image_size=(128, 128),
+    batch_size=32,
+    labels=None,
+    label_mode=None,
+    shuffle=False
+)
 
-        history = model.fit(train_dataset, epochs=5)   
-        plt.figure(figsize=(8, 4))
-        plt.subplot(1, 2, 1)
-        plt.plot(history.history['accuracy'], label='Train Acc')
-        plt.title('Accuracy')
-        plt.legend()
-        plt.subplot(1, 2, 2)
-        plt.plot(history.history['loss'], label='Train Loss')
-        plt.title('Loss')
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
+class_names = train_dataset.class_names
+print("\\nClass names:", class_names)
+train_count = sum([len(batch[0]) for batch in train_dataset])
+test_count = sum([len(batch[0]) for batch in test_dataset])
+print(f"\\nTotal training images: {train_count}")
+print(f"Total testing images: {test_count}")
 
-        y_pred = []
-        for images in test_dataset:  
-            preds = model.predict(images)
-            y_pred.extend(np.argmax(preds, axis=1))  
-        y_pred = np.array(y_pred)
-        y_true = y_pred.copy()
-        cm = confusion_matrix(y_true, y_pred)
-        disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-        disp.plot(cmap=plt.cm.Blues)
-        plt.title("Confusion Matrix ")
-        plt.show()
+model = Sequential([
+    Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 3)),
+    MaxPooling2D(2, 2),
+    Conv2D(64, (3, 3), activation='relu'),
+    MaxPooling2D(2, 2),
+    Conv2D(128, (3, 3), activation='relu'),
+    MaxPooling2D(2, 2),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dropout(0.5),
+    Dense(7, activation='softmax')
+])
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.summary()
 
-    """)
+history = model.fit(train_dataset, epochs=5)
+plt.figure(figsize=(8, 4))
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Train Acc')
+plt.title('Accuracy')
+plt.legend()
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'], label='Train Loss')
+plt.title('Loss')
+plt.legend()
+plt.tight_layout()
+plt.show()
 
+y_pred = []
+for images in test_dataset:
+    preds = model.predict(images)
+    y_pred.extend(np.argmax(preds, axis=1))
+y_pred = np.array(y_pred)
+y_true = y_pred.copy()
+cm = confusion_matrix(y_true, y_pred)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+disp.plot(cmap=plt.cm.Blues)
+plt.title("Confusion Matrix ")
+plt.show()
+""")
 def exp2():
     print("""
         
