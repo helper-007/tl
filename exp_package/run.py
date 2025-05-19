@@ -313,15 +313,15 @@ plt.show()
 def exp5():
     print("""
 Experiment 5
+
 import gensim
 from gensim.models import Word2Vec
 from nltk.tokenize import word_tokenize
 import nltk
 import multiprocessing
+import numpy as np
 
-print("Downloading NLTK data...")
 nltk.download('punkt')
-print("NLTK data downloaded successfully!")
 
 corpus = [
     "Word embeddings are a type of word representation.",
@@ -330,51 +330,37 @@ corpus = [
     "Both Word2Vec and GloVe capture semantic relationships."
 ]
 
-print("Corpus defined successfully!")
-print("Sample sentences:", corpus[:2])
 try:
     tokenized_corpus = [word_tokenize(sentence.lower()) for sentence in corpus]
-    print("Tokenization successful!")
-    print("Sample tokenized sentence:", tokenized_corpus[0])
 except LookupError:
     from nltk.tokenize import RegexpTokenizer
-    tokenizer = RegexpTokenizer(r'\\w+')
+    tokenizer = RegexpTokenizer(r'\w+')
     tokenized_corpus = [tokenizer.tokenize(sentence.lower()) for sentence in corpus]
-    print("Used fallback tokenizer (NLTK punkt failed).")
-    print("Sample tokenized sentence:", tokenized_corpus[0])
 
 vector_size = 100
 window_size = 5
 min_count = 1
 workers = multiprocessing.cpu_count()
 epochs = 100
-print("Word2Vec parameters set:")
-print(f"- Vector size: {vector_size}")
-print(f"- Window size: {window_size}")
-print(f"- Min word count: {min_count}")
-print(f"- Workers: {workers}")
-print(f"- Epochs: {epochs}")
 
-word2vec_model = Word2Vec(sentences=tokenized_corpus, vector_size=vector_size, window=window_size, min_count=min_count, workers=workers, epochs=epochs)
+word2vec_model = Word2Vec(
+    sentences=tokenized_corpus,
+    vector_size=vector_size,
+    window=window_size,
+    min_count=min_count,
+    workers=workers,
+    epochs=epochs
+)
+
 vocab = list(word2vec_model.wv.key_to_index.keys())
-print(f"Vocabulary size: {len(vocab)} words")
-print("Sample words in vocab:", vocab[:5])
-if 'word' in word2vec_model.wv:
-    print("\\nMost similar words to 'word':")
-    print(word2vec_model.wv.most_similar("word", topn=3))
-else:
-    print("'word' not in vocabulary.")
-if 'embedding' in word2vec_model.wv:
-    print("\\nVector for 'embedding' (first 5 dims):")
-    print(word2vec_model.wv["embedding"][:5])
-else:
-    print("'embedding' not in vocabulary.")
 
-## GLOVE MODEL
+if 'word' in word2vec_model.wv:
+    word_similar = word2vec_model.wv.most_similar("word", topn=3)
+if 'embedding' in word2vec_model.wv:
+    embedding_vector = word2vec_model.wv["embedding"][:5]
+
 !wget http://nlp.stanford.edu/data/glove.6B.zip
 !unzip glove.6B.zip
-
-import numpy as np
 
 def load_glove_embeddings(path):
     embeddings = {}
@@ -389,13 +375,12 @@ def load_glove_embeddings(path):
 glove_path = 'glove.6B.100d.txt'
 glove_embeddings = load_glove_embeddings(glove_path)
 
-print(f"Loaded {len(glove_embeddings)} word vectors")
-print("Vector for 'king':", glove_embeddings['king'][:5])
-print("Most similar to 'paris':", sorted(
+paris_similarities = sorted(
     [(word, np.dot(glove_embeddings['paris'], glove_embeddings[word]))
-    for word in ['france', 'london', 'berlin']],
+     for word in ['france', 'london', 'berlin']],
     key=lambda x: -x[1]
-))
+)
+
 """)
 
 
