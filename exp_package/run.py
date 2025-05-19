@@ -624,36 +624,103 @@ plt.show()
 def exp9():
     print("""
 Experiment 9
-import tensorflow as tf
-import tensorflow_hub as hub
+
+
+import pandas as pd
+from google.colab import drive
+drive.mount('/content/drive')
+
+metadata = pd.read_csv('/content/drive/MyDrive/archive-2/esc50.csv')
+
 import librosa
+audio_file_path = '/content/drive/MyDrive/archive-2/audio/audio/1-100032-A-0.wav'
+librosa_audio_data, librosa_sample_rate = librosa.load(audio_file_path)
+
+import matplotlib.pyplot as plt
+plt.figure(figsize=(15, 5))
+plt.plot(librosa_audio_data)
+
+from scipy.io import wavfile as wav
+wave_sample_rate, wave_audio = wav.read(audio_file_path)
+
+plt.figure(figsize=(15, 5))
+plt.plot(wave_audio)
+
 import numpy as np
-import urllib.request
-import csv
+import os
+from tqdm import tqdm
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
-model = hub.load('https://tfhub.dev/google/yamnet/1')
-print("YAMNet model loaded successfully.")
+import IPython.display as ipd
+import seaborn as sns
 
-waveform, sr = librosa.load("/content/file_example_WAV_1MG.wav", sr=16000)
-print("Audio file loaded. Sample rate:", sr, "| Waveform shape:", waveform.shape)
+from tensorflow import keras
+from keras.utils import to_categorical
+from keras import layers, Sequential
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.layers import Conv2D, MaxPooling2D, BatchNormalization
 
-scores, embeddings, spectrogram = model(waveform)
-print("Model inference completed.")
-print("Scores shape:", scores.shape)
-print("Embeddings shape:", embeddings.shape)
+from sklearn.metrics import confusion_matrix
+from warnings import filterwarnings
+filterwarnings('ignore')
 
-mean_scores = tf.reduce_mean(scores, axis=0)
-top_class_index = tf.argmax(mean_scores).numpy()
-print("Top class index predicted:", top_class_index)
+mfccs = librosa.feature.mfcc(y=librosa_audio_data, sr=librosa_sample_rate, n_mfcc=40)
 
-class_map_path = model.class_map_path().numpy().decode('utf-8')
-print("Class map path:", class_map_path)
+audio_dataset_path = '/content/drive/MyDrive/archive-2/audio/audio'
+metadata = pd.read_csv('/content/drive/MyDrive/archive-2/esc50.csv')
 
-with open(class_map_path) as f:
-    reader = csv.reader(f)
-    class_names = [row[2] for row in reader if row]
+def mfccExtract(file):
+    waveform, sampleRate = librosa.load(file)
+    features = librosa.feature.mfcc(y=waveform, sr=sampleRate, n_mfcc=50)
+    return np.mean(features, axis=1)
 
-print("Predicted class label:", class_names[top_class_index])
+extractAll = []
+for index_num, row in tqdm(metadata.iterrows()):
+    file_name = os.path.join(audio_dataset_path, row['filename'])
+    features = mfccExtract(file_name)
+    extractAll.append([features, row['take']])
+
+featuresDf = pd.DataFrame(extractAll, columns=['Features', 'take'])
+
+X = np.array(featuresDf['Features'].tolist())
+Y = np.array(featuresDf['take'].tolist())
+
+labelencoder = LabelEncoder()
+Y = to_categorical(labelencoder.fit_transform(Y))
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+num_labels = Y.shape[1]
+
+model = Sequential([
+    layers.Dense(1024, activation='relu', input_shape=(50,)),
+    layers.BatchNormalization(),
+    layers.Dense(512, activation='relu'),
+    layers.BatchNormalization(),
+    layers.Dense(256, activation='relu'),
+    layers.BatchNormalization(),
+    layers.Dense(128, activation='relu'),
+    layers.BatchNormalization(),
+    layers.Dense(64, activation='relu'),
+    layers.BatchNormalization(),
+    layers.Dense(32, activation='relu'),
+    layers.BatchNormalization(),
+    layers.Dense(num_labels, activation='softmax')
+])
+model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
+model.summary()
+
+history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=10)
+
+test_accuracy = model.evaluate(X_test, Y_test, verbose=0)
+
+historyDf = pd.DataFrame(history.history)
+historyDf.loc[:, ['loss', 'val_loss']].plot()
+historyDf.loc[:, ['accuracy', 'val_accuracy']].plot()
+
+score = model.evaluate(X_test, Y_test)[1] * 100
+
 """)
 
 
