@@ -188,10 +188,13 @@ predicted_class_names = [labels_map[label] for label in predicted_labels]
 
 def exp3():
     print("""
+
 Experiment 3
-pip install tensorflow
+
+
 import tensorflow as tf
-from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.applications import VGG16
+from tensorflow.keras.applications.vgg16 import preprocess_input
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
 from tensorflow.keras.datasets import cifar10
@@ -199,24 +202,26 @@ from tensorflow.keras.utils import to_categorical
 import matplotlib.pyplot as plt
 
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-print(f"Training data shape: {x_train.shape}, Training labels: {y_train.shape}")
-print(f"Test data shape: {x_test.shape}, Test labels: {y_test.shape}")
 
-x_train, x_test = x_train / 255.0, x_test / 255.0
-y_train, y_test = to_categorical(y_train), to_categorical(y_test)
-x_train = tf.image.resize(x_train, (96, 96))
-x_test = tf.image.resize(x_test, (96, 96))
+x_train = tf.image.resize(x_train, (224, 224))
+x_test = tf.image.resize(x_test, (224, 224))
+x_train = preprocess_input(x_train * 255.0)
+x_test = preprocess_input(x_test * 255.0)
 
-base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(96, 96, 3))
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+
+base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 base_model.trainable = False
+
 x = GlobalAveragePooling2D()(base_model.output)
 x = Dense(128, activation='relu')(x)
 output = Dense(10, activation='softmax')(x)
+
 model = Model(inputs=base_model.input, outputs=output)
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 history = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5, batch_size=64)
-print(f"Final Training Accuracy: {history.history['accuracy'][-1]:.4f}")
 
 plt.figure(figsize=(12, 4))
 plt.subplot(1, 2, 1)
@@ -224,12 +229,15 @@ plt.plot(history.history['accuracy'], label='Train Acc')
 plt.plot(history.history['val_accuracy'], label='Val Acc')
 plt.legend()
 plt.title("Accuracy")
+
 plt.subplot(1, 2, 2)
 plt.plot(history.history['loss'], label='Train Loss')
 plt.plot(history.history['val_loss'], label='Val Loss')
 plt.legend()
 plt.title("Loss")
+
 plt.show()
+
 """)
 
 
